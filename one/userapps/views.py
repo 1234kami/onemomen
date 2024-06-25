@@ -9,18 +9,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from transliterate.utils import _
-from .permissions import IsOwnerOrReadOnly  # Импортируем наше новое разрешение
-from .models import User
-from .serializers import (
-    UserSerializer,
-    UserLoginSerializer,
-    ResetPasswordSerializer,
-    ResetPasswordVerifySerializer,
-    LogoutSerializer,
-    UserProfileSerializer,
-    ActivationCodeSerializer
-)
 
+from .models import *
+from .serializers import *
 def generate_activation_code():
     """Генерирует случайный код активации, состоящий только из цифр."""
     return ''.join(random.choices(string.digits, k=6))
@@ -43,22 +34,36 @@ class RegistrationAPIView(generics.CreateAPIView):
 
         try:
             user = serializer.save()
+            user.is_active = False
             user.set_password(password)
-            user.is_active = True  # Установить пользователя как активного
             user.save()
 
-            # Construct the message after the user has been created
+            # Генерация и установка кода активации
+            activation_code = generate_activation_code()
+            user.activation_code = activation_code
+            user.save()
+
+            # Отправка письма с кодом активации
             message = (
                 f"<h1>Здравствуйте, {user.email}!</h1>"
                 f"<p>Поздравляем Вас с успешной регистрацией на сайте {settings.BASE_URL}</p>"
+                f"<p>Ваш код активации: {activation_code}</p>"
                 f"<p>С наилучшими пожеланиями,<br>Команда {settings.BASE_URL}</p>"
             )
 
-            self.send_verification_email(user.email, message)
+            send_mail(
+                _('Активация вашего аккаунта'),
+                '',
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+                html_message=message,
+            )
 
             return Response({
                 'response': True,
-                'message': _('Пользователь успешно зарегистрирован.')
+                'message': _(
+                    'Пользователь успешно зарегистрирован. Проверьте вашу электронную почту для получения кода активации.')
             }, status=status.HTTP_201_CREATED)
 
         except IntegrityError:
@@ -67,12 +72,32 @@ class RegistrationAPIView(generics.CreateAPIView):
                 'message': _('Не удалось зарегистрировать пользователя')
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def send_verification_email(self, email, message):
-        subject = _('Подтверждение регистрации')
-        email_from = settings.EMAIL_HOST_USER
-        recipient_list = [email]
-        send_mail(subject, '', email_from, recipient_list, html_message=message)
+class ActivateAccountView(generics.GenericAPIView):
+    """Активация учетной записи по коду активации."""
+    serializer_class = ActivationCodeSerializer
+    permission_classes = [AllowAny]
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # email = serializer.validated_data['email']
+        activation_code = serializer.validated_data['activation_code']
+
+        try:
+            user = User.objects.get(activation_code=activation_code)
+            user.is_active = True
+            user.activation_code = ''
+            user.save()
+            return Response({
+                'response': True,
+                'message': _('Ваш аккаунт был успешно активирован.')
+            }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({
+                'response': False,
+                'message': _('Неверный код активации или email.')
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class UserLoginView(generics.CreateAPIView):
     """Аутентификация пользователя."""
@@ -88,7 +113,6 @@ class UserLoginView(generics.CreateAPIView):
             'response': True,
             'token': token.key
         }, status=status.HTTP_200_OK)
-
 class ResetPasswordView(generics.GenericAPIView):
     """Запрос на сброс пароля."""
     serializer_class = ResetPasswordSerializer
@@ -132,6 +156,7 @@ class ResetPasswordView(generics.GenericAPIView):
                 'message': _('Пользователь с этим адресом электронной почты не найден.')
             }, status=status.HTTP_404_NOT_FOUND)
 
+
 class ResetPasswordVerifyView(generics.GenericAPIView):
     """Подтверждение сброса пароля."""
     serializer_class = ResetPasswordVerifySerializer
@@ -140,26 +165,22 @@ class ResetPasswordVerifyView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         reset_code = serializer.validated_data['reset_code']
 
         try:
             user = User.objects.get(reset_code=reset_code)
-
-            user.set_password(reset_code)
             user.reset_code = ''
             user.save()
-
             return Response({
                 'response': True,
                 'message': _('Password has been successfully changed.')
             }, status=status.HTTP_200_OK)
-
         except User.DoesNotExist:
             return Response({
                 'response': False,
                 'message': _('Invalid password reset code.')
             }, status=status.HTTP_400_BAD_REQUEST)
-
 class LogoutView(generics.GenericAPIView):
     """Выход пользователя из системы."""
     serializer_class = LogoutSerializer
@@ -171,9 +192,34 @@ class LogoutView(generics.GenericAPIView):
             'message': _('Вы успешно вышли из системы.')
         })
 
+
 class UserProfileView(generics.RetrieveAPIView):
+    """Просмотр профиля пользователя."""
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]  # Добавляем наше новое разрешение
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
         return self.request.user
+class ApplicationListCreateAPIView(generics.ListAPIView):
+    serializer_class = ApplicationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Application.objects.all()
+        lang = self.kwargs.get("lang", None)
+        if lang:
+            queryset = queryset.filter(language=lang)
+        return queryset
+
+class DiscountListCreateAPIView(generics.ListAPIView):
+    serializer_class = DiscountSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Discount.objects.all()
+        lang = self.kwargs.get("lang", None)
+        if lang:
+            # Example of filtering based on related model field
+            queryset = queryset.filter(application__language=lang)
+        return queryset
+

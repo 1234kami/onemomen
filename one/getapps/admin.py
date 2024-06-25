@@ -1,6 +1,5 @@
 from django.contrib import admin
-from .models import FAQ, ExchangeRule, KYCAMLCheck, CurrencyNews, OneMoment, Contact, Contest, Application, Discount, \
-    Footer, Review
+from .models import FAQ, ExchangeRule, KYCAMLCheck, CurrencyNews, OneMoment, Contact, Contest,Footer, Review
 @admin.register(FAQ)
 class FAQAdmin(admin.ModelAdmin):
     list_display = ('title', 'language')
@@ -34,15 +33,6 @@ class ContestAdmin(admin.ModelAdmin):
     list_display = ('end_time', 'participants', 'prize_amount', 'language')
     search_fields = ('participation_instructions', 'url')
     list_filter = ('language', 'end_time', 'deadline')
-@admin.register(Application)
-class ApplicationAdmin(admin.ModelAdmin):
-    list_display = ('number', 'date', 'direction', 'direct')
-    search_fields = ('number', 'direction', 'direct')
-    list_filter = ('language', 'date')
-@admin.register(Discount)
-class DiscountAdmin(admin.ModelAdmin):
-    list_display = ('start_amount', 'end_amount', 'percentage',)
-    search_fields = ('start_amount', 'end_amount', 'percentage')
 @admin.register(Footer)
 class FooterAdmin(admin.ModelAdmin):
     list_display = ('urls','image')

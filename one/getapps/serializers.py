@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from rest_framework.authtoken.admin import User
-from .models import FAQ, ExchangeRule, KYCAMLCheck, CurrencyNews, OneMoment, Contact, Contest, Application, Discount, \
-    Footer, Review
+from .models import *
 from googletrans import Translator
 
 translator = Translator()
@@ -68,14 +67,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['email']
-class ApplicationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Application
-        fields = ['id', 'number', 'date', 'direction', 'language', 'direct']
-class DiscountSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Discount
-        fields = '__all__'
 class FooterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Footer

@@ -2,9 +2,7 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import *
-from .models import FAQ, ExchangeRule, KYCAMLCheck, CurrencyNews, OneMoment, Contact, Contest, Application, Discount, \
-    Footer, Review
-
+from .models import *
 
 class AllDataView(APIView):
     def get(self, request, *args, **kwargs):
@@ -22,8 +20,6 @@ class AllDataView(APIView):
         one_moments = filter_by_language(OneMoment.objects.all())
         contacts = filter_by_language(Contact.objects.all())  # Assuming no language field
         contests =filter_by_language(Contest.objects.all())# Assuming no language field
-        applications = filter_by_language(Application.objects.all())
-        discounts = filter_by_language(Discount.objects.all())
         footers = filter_by_language(Footer.objects.all())
 
 
@@ -35,8 +31,6 @@ class AllDataView(APIView):
             'one_moments': OneMomentSerializer(one_moments, many=True).data,
             'contacts': ContactSerializer(contacts, many=True).data,
             'contests': ContestSerializer(contests, many=True).data,
-            'applications': ApplicationSerializer(applications, many=True).data,
-            'discounts': DiscountSerializer(discounts, many=True).data,
             'footers': FooterSerializer(footers, many=True).data,
         }
 
