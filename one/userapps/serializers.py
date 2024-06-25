@@ -71,5 +71,4 @@ class DiscountSerializer(serializers.ModelSerializer):
         model = Discount
         fields = '__all__'
 class ActivationCodeSerializer(serializers.Serializer):
-    email = serializers.EmailField()
     activation_code = serializers.CharField(max_length=6)
