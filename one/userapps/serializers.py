@@ -62,13 +62,5 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email']
-class ApplicationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Application
-        fields = ['id', 'number', 'date', 'direction', 'language', 'direct']
-class DiscountSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Discount
-        fields = '__all__'
 class ActivationCodeSerializer(serializers.Serializer):
     activation_code = serializers.CharField(max_length=6)

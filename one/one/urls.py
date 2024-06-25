@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('userapps.urls')),
     path('api/',include('getapps.urls')),
+    path('Profil/',include('Profil.urls')),
 
 ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
 urlpatterns += yasg_urls

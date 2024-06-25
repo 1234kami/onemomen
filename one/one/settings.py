@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
     'modeltranslation',
+    'Profil',
     'sslserver',
     'django_extensions',
     'userapps',
