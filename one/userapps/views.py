@@ -47,6 +47,15 @@ class RegistrationAPIView(generics.CreateAPIView):
             user.is_active = True  # Установить пользователя как активного
             user.save()
 
+            # Construct the message after the user has been created
+            message = (
+                f"<h1>Здравствуйте, {user.email}!</h1>"
+                f"<p>Поздравляем Вас с успешной регистрацией на сайте {settings.BASE_URL}</p>"
+                f"<p>С наилучшими пожеланиями,<br>Команда {settings.BASE_URL}</p>"
+            )
+
+            self.send_verification_email(user.email, message)
+
             return Response({
                 'response': True,
                 'message': _('Пользователь успешно зарегистрирован.')
@@ -57,6 +66,13 @@ class RegistrationAPIView(generics.CreateAPIView):
                 'response': False,
                 'message': _('Не удалось зарегистрировать пользователя')
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def send_verification_email(self, email, message):
+        subject = _('Подтверждение регистрации')
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [email]
+        send_mail(subject, '', email_from, recipient_list, html_message=message)
+
 
 class UserLoginView(generics.CreateAPIView):
     """Аутентификация пользователя."""
