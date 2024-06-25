@@ -31,7 +31,6 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 # Application definition
-
 INSTALLED_APPS = [
     'jazzmin',
     'django.contrib.admin',
@@ -41,16 +40,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',  # Ensure this is listed only once
     'drf_yasg',
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
-    'corsheaders',
     'modeltranslation',
     'sslserver',
     'django_extensions',
     'userapps',
     'getapps',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -60,8 +60,18 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
-
+CORS_ALLOWED_ORIGINS = [
+    "https://yourdomain.com",
+    "http://localhost:3000",
+    "http://localhost:8000",  # Для разработки на localhost
+    "http://localhost:8080",  # Для Swagger UI
+    # Добавьте другие разрешенные хосты или IP-адреса
+     # Добавьте другие разрешенные хосты или IP-адреса
+]
+CORS_ORIGIN_ALLOW_ALL = True
 ROOT_URLCONF = 'one.urls'
 
 TEMPLATES = [
@@ -111,7 +121,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
