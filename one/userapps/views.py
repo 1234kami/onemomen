@@ -1,5 +1,6 @@
 import random
 import string
+import re
 from django.contrib.auth import authenticate, logout
 from django.core.mail import send_mail
 from django.conf import settings
@@ -12,9 +13,22 @@ from transliterate.utils import _
 
 from .models import *
 from .serializers import *
+
 def generate_activation_code():
     """Генерирует случайный код активации, состоящий только из цифр."""
     return ''.join(random.choices(string.digits, k=6))
+
+def validate_password(password):
+    """Проверка пароля на минимум 8 символов, наличие заглавной буквы, цифры и строчной буквы."""
+    if len(password) < 8:
+        return False, _('Пароль должен быть не менее 8 символов.')
+    if not re.search(r'[A-Z]', password):
+        return False, _('Пароль должен содержать хотя бы одну заглавную букву.')
+    if not re.search(r'[a-z]', password):
+        return False, _('Пароль должен содержать хотя бы одну строчную букву.')
+    if not re.search(r'[0-9]', password):
+        return False, _('Пароль должен содержать хотя бы одну цифру.')
+    return True, ''
 
 class RegistrationAPIView(generics.CreateAPIView):
     """Регистрация нового пользователя."""
@@ -26,10 +40,11 @@ class RegistrationAPIView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
 
         password = request.data.get('password')
-        if len(password) < 8:
+        is_valid, message = validate_password(password)
+        if not is_valid:
             return Response({
                 'response': False,
-                'message': _('Пароль должен быть не менее 8 символов.')
+                'message': message
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -81,7 +96,6 @@ class ActivateAccountView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # email = serializer.validated_data['email']
         activation_code = serializer.validated_data['activation_code']
 
         try:
@@ -113,6 +127,7 @@ class UserLoginView(generics.CreateAPIView):
             'response': True,
             'token': token.key
         }, status=status.HTTP_200_OK)
+
 class ResetPasswordView(generics.GenericAPIView):
     """Запрос на сброс пароля."""
     serializer_class = ResetPasswordSerializer
@@ -156,7 +171,6 @@ class ResetPasswordView(generics.GenericAPIView):
                 'message': _('Пользователь с этим адресом электронной почты не найден.')
             }, status=status.HTTP_404_NOT_FOUND)
 
-
 class ResetPasswordVerifyView(generics.GenericAPIView):
     """Подтверждение сброса пароля."""
     serializer_class = ResetPasswordVerifySerializer
@@ -174,13 +188,14 @@ class ResetPasswordVerifyView(generics.GenericAPIView):
             user.save()
             return Response({
                 'response': True,
-                'message': _('Password has been successfully changed.')
+                'message': _('Пароль был успешно изменен.')
             }, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({
                 'response': False,
-                'message': _('Invalid password reset code.')
+                'message': _('Неверный код для сброса пароля.')
             }, status=status.HTTP_400_BAD_REQUEST)
+
 class LogoutView(generics.GenericAPIView):
     """Выход пользователя из системы."""
     serializer_class = LogoutSerializer
@@ -191,7 +206,6 @@ class LogoutView(generics.GenericAPIView):
             'response': True,
             'message': _('Вы успешно вышли из системы.')
         })
-
 
 class UserProfileView(generics.RetrieveAPIView):
     """Просмотр профиля пользователя."""
