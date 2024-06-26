@@ -9,10 +9,21 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
-from transliterate.utils import _
-
-from .models import *
-from .serializers import *
+from rest_framework.views import APIView
+from django.utils.translation import gettext_lazy as _
+from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import GenericAPIView, CreateAPIView
+from .models import User
+from .serializers import (
+    UserSerializer,
+    ActivationCodeSerializer,
+    UserLoginSerializer,
+    ChangePasswordSerializer,
+    ResetPasswordSerializer,
+    ResetPasswordVerifySerializer,
+    LogoutSerializer,
+    UserProfileSerializer
+)
 
 def generate_activation_code():
     """Генерирует случайный код активации, состоящий только из цифр."""
@@ -128,6 +139,31 @@ class UserLoginView(generics.CreateAPIView):
             'token': token.key
         }, status=status.HTTP_200_OK)
 
+class ChangePasswordView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
+
+    def post(self, request):
+        user = request.user
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            password = serializer.data["password"]
+            confirm_password = serializer.data["confirm_password"]
+
+            if password != confirm_password:
+                return Response({"response": False, "message": _("Пароли не совпадают")})
+
+            is_valid, message = validate_password(password)
+            if not is_valid:
+                return Response({"response": False, "message": message})
+
+            user.set_password(password)
+            user.save()
+
+            return Response({"response": True, "message": _("Пароль успешно обновлен")})
+        return Response(serializer.errors)
+
 class ResetPasswordView(generics.GenericAPIView):
     """Запрос на сброс пароля."""
     serializer_class = ResetPasswordSerializer
@@ -183,17 +219,22 @@ class ResetPasswordVerifyView(generics.GenericAPIView):
         reset_code = serializer.validated_data['reset_code']
 
         try:
-            user = User.objects.get(reset_code=reset_code)
+            user = User.objects.get(reset_code=reset_code)  # Добавлено условие для проверки кода
+
             user.reset_code = ''
             user.save()
+
+            # Генерация токена и отправка ответа с токеном
+            token, created = Token.objects.get_or_create(user=user)
             return Response({
                 'response': True,
-                'message': _('Пароль был успешно изменен.')
+                'token': token.key,
+                'message': _('Пароль был успешно изменен и вы получили токен.')
             }, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({
                 'response': False,
-                'message': _('Неверный код для сброса пароля.')
+                'message': _('Неверный код для сброса пароля или промокод.')
             }, status=status.HTTP_400_BAD_REQUEST)
 
 class LogoutView(generics.GenericAPIView):
@@ -207,7 +248,7 @@ class LogoutView(generics.GenericAPIView):
             'message': _('Вы успешно вышли из системы.')
         })
 
-class UserProfileView(generics.RetrieveAPIView):
+class UserProfileView(RetrieveAPIView):
     """Просмотр профиля пользователя."""
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]

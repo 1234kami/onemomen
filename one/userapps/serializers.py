@@ -64,3 +64,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['id', 'email']
 class ActivationCodeSerializer(serializers.Serializer):
     activation_code = serializers.CharField(max_length=6)
+
+class ChangePasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        required=True,
+        min_length=8,
+        error_messages={"min_length": "Не менее 8 символов.", "required": "Это поле обязательно."}
+    )
+    confirm_password = serializers.CharField(
+        required=True,
+        min_length=8,
+        error_messages={"min_length": "Не менее 8 символов.", "required": "Это поле обязательно."}
+    )
