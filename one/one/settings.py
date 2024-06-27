@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'userapps',
     'getapps',
-    'exchange',
 ]
 
 
@@ -162,7 +161,6 @@ BASE_URL = 'https://onemoment.cc/'
 
 from datetime import timedelta
 
-...
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
