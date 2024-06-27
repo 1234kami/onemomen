@@ -40,6 +40,7 @@ def validate_password(password):
         return False, _('Пароль должен содержать хотя бы одну цифру.')
     return True, ''
 
+
 class RegistrationAPIView(generics.CreateAPIView):
     """Регистрация нового пользователя."""
     serializer_class = UserSerializer
@@ -72,21 +73,19 @@ class RegistrationAPIView(generics.CreateAPIView):
             # Replace with your actual logic to determine the language preference
             language = user.language if hasattr(user, 'language') else 'ru'  # Default to Russian if not specified
 
-            # Отправка письма с кодом активации
-            if language == 'en':
-                message = (
-                    f"<h1>{_('Hello')}, {user.email}!</h1>"
-                    f"<p>{_('Congratulations on successfully registering at')} {settings.BASE_URL}</p>"
-                    f"<p>{_('Your activation code')}: {activation_code}</p>"
-                    f"<p>{_('Best regards')},<br>{_('Team')} {settings.BASE_URL}</p>"
-                )
-            else:  # Default to Russian
-                message = (
-                    f"<h1>{_('Здравствуйте')}, {user.email}!</h1>"
-                    f"<p>{_('Поздравляем Вас с успешной регистрацией на сайте')} {settings.BASE_URL}</p>"
-                    f"<p>{_('Ваш код активации')}: {activation_code}</p>"
-                    f"<p>{_('С наилучшими пожеланиями')},<br>{_('Команда')} {settings.BASE_URL}</p>"
-                )
+            # Отправка письма с кодом активации на английском и русском
+            message_en = (
+                f"<h1>{_('Hello')}, {user.email}!</h1>"
+                f"<p>{_('Congratulations on successfully registering at')} {settings.BASE_URL}</p>"
+                f"<p>{_('Your activation code')}: {activation_code}</p>"
+                f"<p>{_('Best regards')},<br>{_('Team')} {settings.BASE_URL}</p>"
+            )
+            message_ru = (
+                f"<h1>{_('Здравствуйте')}, {user.email}!</h1>"
+                f"<p>{_('Поздравляем Вас с успешной регистрацией на сайте')} {settings.BASE_URL}</p>"
+                f"<p>{_('Ваш код активации')}: {activation_code}</p>"
+                f"<p>{_('С наилучшими пожеланиями')},<br>{_('Команда')} {settings.BASE_URL}</p>"
+            )
 
             send_mail(
                 _('Активация вашего аккаунта'),
@@ -94,22 +93,22 @@ class RegistrationAPIView(generics.CreateAPIView):
                 settings.DEFAULT_FROM_EMAIL,
                 [user.email],
                 fail_silently=False,
-                html_message=message,
+                html_message=message_en if language == 'en' else message_ru,
             )
 
             return Response({
                 'response': True,
-                'message': _(
-                    'Пользователь успешно зарегистрирован. Проверьте вашу электронную почту для получения кода активации.')
+                'message': {
+                    'en': _('User successfully registered. Check your email for the activation code.'),
+                    'ru': _('Пользователь успешно зарегистрирован. Проверьте вашу электронную почту для получения кода активации.')
+                }
             }, status=status.HTTP_201_CREATED)
 
         except IntegrityError:
             return Response({
                 'response': False,
-                'message': _('Не удалось зарегистрировать пользователя')
+                'message': _('Failed to register user')  # Translation handled by Django's gettext
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 class ActivateAccountView(generics.GenericAPIView):
     """Активация учетной записи по коду активации."""
     serializer_class = ActivationCodeSerializer
