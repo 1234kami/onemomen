@@ -68,13 +68,25 @@ class RegistrationAPIView(generics.CreateAPIView):
             user.activation_code = activation_code
             user.save()
 
+            # Determine the language preference of the user (example: assuming user.language is set)
+            # Replace with your actual logic to determine the language preference
+            language = user.language if hasattr(user, 'language') else 'ru'  # Default to Russian if not specified
+
             # Отправка письма с кодом активации
-            message = (
-                f"<h1>Здравствуйте, {user.email}!</h1>"
-                f"<p>Поздравляем Вас с успешной регистрацией на сайте {settings.BASE_URL}</p>"
-                f"<p>Ваш код активации: {activation_code}</p>"
-                f"<p>С наилучшими пожеланиями,<br>Команда {settings.BASE_URL}</p>"
-            )
+            if language == 'en':
+                message = (
+                    f"<h1>{_('Hello')}, {user.email}!</h1>"
+                    f"<p>{_('Congratulations on successfully registering at')} {settings.BASE_URL}</p>"
+                    f"<p>{_('Your activation code')}: {activation_code}</p>"
+                    f"<p>{_('Best regards')},<br>{_('Team')} {settings.BASE_URL}</p>"
+                )
+            else:  # Default to Russian
+                message = (
+                    f"<h1>{_('Здравствуйте')}, {user.email}!</h1>"
+                    f"<p>{_('Поздравляем Вас с успешной регистрацией на сайте')} {settings.BASE_URL}</p>"
+                    f"<p>{_('Ваш код активации')}: {activation_code}</p>"
+                    f"<p>{_('С наилучшими пожеланиями')},<br>{_('Команда')} {settings.BASE_URL}</p>"
+                )
 
             send_mail(
                 _('Активация вашего аккаунта'),
@@ -96,6 +108,7 @@ class RegistrationAPIView(generics.CreateAPIView):
                 'response': False,
                 'message': _('Не удалось зарегистрировать пользователя')
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class ActivateAccountView(generics.GenericAPIView):
     """Активация учетной записи по коду активации."""
