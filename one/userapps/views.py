@@ -122,13 +122,21 @@ class ActivateAccountView(generics.GenericAPIView):
 
         try:
             user = User.objects.get(activation_code=activation_code)
+            # Проверка на срок годности кода активации (если нужно)
+            # if user.activation_code_created_at < timezone.now() - timedelta(hours=24):
+            #     raise ValidationError(_('Срок действия кода активации истек.'))
+
+            # Предполагается, что пользователь уже установил новый пароль и сохранен
+            # после получения письма с кодом активации и установки нового пароля
             user.is_active = True
             user.activation_code = ''
             user.save()
+
             return Response({
                 'response': True,
                 'message': _('Ваш аккаунт был успешно активирован.')
             }, status=status.HTTP_200_OK)
+
         except User.DoesNotExist:
             return Response({
                 'response': False,
