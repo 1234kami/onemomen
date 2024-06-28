@@ -25,6 +25,7 @@ urlpatterns = [
     path('auth/', include('userapps.urls')),
     path('api/',include('getapps.urls')),
     path('Profil/',include('Profil.urls')),
+    path('currency/',include('currency.urls')),
 
 ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
 urlpatterns += yasg_urls
