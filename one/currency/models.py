@@ -26,7 +26,7 @@ class Coin(models.Model):
     name = models.CharField(max_length=100)  # Название криптовалюты
     deposit_status_all = models.BooleanField()  # Статус возможности депозита для всех сетей
     receive_status_all = models.BooleanField()  # Статус возможности получения для всех сетей
-    default_form_value = models.CharField(max_length=50)  # Значение по умолчанию для формы
+    default_form_value = models.CharField(max_length=50)
 
     def __str__(self):
         return self.name  # Возвращает название криптовалюты при обращении к объекту
