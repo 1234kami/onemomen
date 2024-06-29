@@ -23,7 +23,7 @@ from .serializers import (
     LogoutSerializer,
     UserProfileSerializer
 )
-
+import logging
 def generate_activation_code():
     """Генерирует случайный код активации, состоящий только из цифр."""
     return ''.join(random.choices(string.digits, k=6))
@@ -39,7 +39,7 @@ def validate_password(password):
     if not re.search(r'[0-9]', password):
         return False, _('Пароль должен содержать хотя бы одну цифру.')
     return True, ''
-
+logger = logging.getLogger(__name__)
 
 class RegistrationAPIView(generics.CreateAPIView):
     """Регистрация нового пользователя."""
@@ -47,8 +47,16 @@ class RegistrationAPIView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        logger.debug(f"Registration request data: {request.data}")
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            logger.error(f"Validation error: {str(e)}")
+            return Response({
+                'response': False,
+                'message': _('Ошибка валидации')
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         password = request.data.get('password')
         is_valid, message = validate_password(password)
@@ -104,11 +112,18 @@ class RegistrationAPIView(generics.CreateAPIView):
                 }
             }, status=status.HTTP_201_CREATED)
 
-        except IntegrityError:
+        except IntegrityError as e:
+            logger.error(f"IntegrityError: {str(e)}")
+            if 'UNIQUE constraint' in str(e):
+                return Response({
+                    'response': False,
+                    'message': _('Такой email уже зарегистрирован.')
+                }, status=status.HTTP_400_BAD_REQUEST)
             return Response({
                 'response': False,
-                'message': _('Failed to register user')  # Translation handled by Django's gettext
+                'message': _('Не удалось зарегистрировать пользователя.')
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ActivateAccountView(generics.GenericAPIView):
     """Активация учетной записи по коду активации."""
     serializer_class = ActivationCodeSerializer
@@ -150,10 +165,9 @@ class UserLoginView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
         return Response({
             'response': True,
-            'token': token.key
+            'message': _('Успешная аутентификация пользователя.')
         }, status=status.HTTP_200_OK)
 
 class ChangePasswordView(GenericAPIView):
