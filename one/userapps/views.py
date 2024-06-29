@@ -161,13 +161,15 @@ class ActivateAccountView(generics.GenericAPIView):
 class UserLoginView(generics.CreateAPIView):
     """Аутентификация пользователя."""
     serializer_class = UserLoginSerializer
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
         return Response({
             'response': True,
-            'message': _('Успешная аутентификация пользователя.')
+            'token': token.key
         }, status=status.HTTP_200_OK)
 
 class ChangePasswordView(GenericAPIView):
