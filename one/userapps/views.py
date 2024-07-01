@@ -10,7 +10,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveAPIView, GenericAPIView, CreateAPIView
 from django.utils.translation import gettext_lazy as _
 from .models import User
 from .serializers import (
@@ -23,7 +22,13 @@ from .serializers import (
     LogoutSerializer,
     UserProfileSerializer
 )
+from rest_framework import generics, permissions
+from django.contrib.auth import get_user_model
 import logging
+
+logger = logging.getLogger(__name__)
+User = get_user_model()
+
 def generate_activation_code():
     """Генерирует случайный код активации, состоящий только из цифр."""
     return ''.join(random.choices(string.digits, k=6))
@@ -39,7 +44,6 @@ def validate_password(password):
     if not re.search(r'[0-9]', password):
         return False, _('Пароль должен содержать хотя бы одну цифру.')
     return True, ''
-logger = logging.getLogger(__name__)
 
 class RegistrationAPIView(generics.CreateAPIView):
     """Регистрация нового пользователя."""
@@ -77,9 +81,8 @@ class RegistrationAPIView(generics.CreateAPIView):
             user.activation_code = activation_code
             user.save()
 
-            # Determine the language preference of the user (example: assuming user.language is set)
-            # Replace with your actual logic to determine the language preference
-            language = user.language if hasattr(user, 'language') else 'ru'  # Default to Russian if not specified
+            # Determine the language preference of the user
+            language = user.language if hasattr(user, 'language') else 'ru'
 
             # Отправка письма с кодом активации на английском и русском
             message_en = (
@@ -114,7 +117,7 @@ class RegistrationAPIView(generics.CreateAPIView):
 
         except IntegrityError as e:
             logger.error(f"IntegrityError: {str(e)}")
-            if 'UNIQUE constraint' in str(e):
+            if 'email' in str(e):
                 return Response({
                     'response': False,
                     'message': _('Такой email уже зарегистрирован.')
@@ -141,8 +144,6 @@ class ActivateAccountView(generics.GenericAPIView):
             # if user.activation_code_created_at < timezone.now() - timedelta(hours=24):
             #     raise ValidationError(_('Срок действия кода активации истек.'))
 
-            # Предполагается, что пользователь уже установил новый пароль и сохранен
-            # после получения письма с кодом активации и установки нового пароля
             user.is_active = True
             user.activation_code = ''
             user.save()
@@ -172,9 +173,11 @@ class UserLoginView(generics.CreateAPIView):
             'token': token.key
         }, status=status.HTTP_200_OK)
 
-class ChangePasswordView(GenericAPIView):
+class ChangePasswordView(generics.GenericAPIView):
+    """Изменение пароля пользователя."""
     permission_classes = [IsAuthenticated]
     serializer_class = ChangePasswordSerializer
+
     def post(self, request):
         user = request.user
         serializer = self.serializer_class(data=request.data)
@@ -195,6 +198,7 @@ class ResetPasswordView(generics.GenericAPIView):
     """Запрос на сброс пароля."""
     serializer_class = ResetPasswordSerializer
     permission_classes = [AllowAny]
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -231,6 +235,7 @@ class ResetPasswordVerifyView(generics.GenericAPIView):
     """Подтверждение сброса пароля."""
     serializer_class = ResetPasswordVerifySerializer
     permission_classes = [AllowAny]
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -239,12 +244,11 @@ class ResetPasswordVerifyView(generics.GenericAPIView):
             user = User.objects.get(reset_code=reset_code)
             user.reset_code = ''
             user.save()
-            # Генерация токена и отправка ответа с токеном
+            # Генерация токена для автоматического входа пользователя после сброса пароля
             token, created = Token.objects.get_or_create(user=user)
             return Response({
                 'response': True,
-                'token': token.key,
-                'message': _('Пароль был успешно изменен и вы получили токен.')
+                'token': token.key
             }, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({
@@ -252,19 +256,23 @@ class ResetPasswordVerifyView(generics.GenericAPIView):
                 'message': _('Неверный код для сброса пароля.')
             }, status=status.HTTP_400_BAD_REQUEST)
 
-class LogoutView(generics.GenericAPIView):
-    """Выход пользователя из системы."""
+class LogoutView(APIView):
+    """Выход пользователя."""
+    permission_classes = [IsAuthenticated]
     serializer_class = LogoutSerializer
+
     def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
         logout(request)
         return Response({
             'response': True,
             'message': _('Вы успешно вышли из системы.')
-        })
-
-class UserProfileView(RetrieveAPIView):
-    """Просмотр профиля пользователя."""
+        }, status=status.HTTP_200_OK)
+class UserProfileView(generics.RetrieveAPIView):
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
-    def get_object(self):
-        return self.request.user
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
