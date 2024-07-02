@@ -27,6 +27,7 @@ urlpatterns = [
     path('Profil/',include('Profil.urls')),
     path('currency/',include('currency.urls')),
     path('apipaymets',include('payment.urls')),
+    path('completion',include('completion.urls')),
 
 ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
 urlpatterns += yasg_urls
