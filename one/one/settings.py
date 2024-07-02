@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'userapps',
     'getapps',
+    'currency',
+    'payment',
 ]
 
 
@@ -194,3 +196,8 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
+
+
+# PayPal settings
+PAYPAL_CLIENT_ID = 'AVZjA0VGOo6AdWZVwI_53jwrSKZv5-X_ReeRf5EjscgyqqpjABGBPoDbNyg5vDDIwDqAbpSFMgXa8unB'
+PAYPAL_CLIENT_SECRET = 'ELJsBjMWoYBXMIb1RElHjBd5pOpBEE2WYBQQ_JkNOyxZWCI4qK9DORvgmBCD7EvSEoFtrbRBMqFfV8vL'
