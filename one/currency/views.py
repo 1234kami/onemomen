@@ -49,25 +49,19 @@ class FiatCurrencyListView(APIView):
 
 
 class All(APIView):
-    def get_all_data():
+    def get(self, request, *args, **kwargs):
         banks = FiatCurrency.objects.all()
-        cryptocurrencies = FiatCurrency.all()
+        cryptocurrencies = Coin.objects.all()
 
+        banks_data = FiatCurrencySerializer(banks, many=True).data
+        cryptocurrencies_data = CoinSerializer(cryptocurrencies, many=True).data
 
-        banks_data = FiatCurrencySerializer(banks,many=True)
-        cryptocurrencies_data = CoinSerializer(cryptocurrencies,many=True).data
-
-
-        return {
-        "vse": {
-            "banks": banks_data,
-            "cryptocurrencies": cryptocurrencies_data
-        },
-        "banki": banks_data,
-        "kripta": cryptocurrencies_data
-    }
-
-   
-
-
-
+        data = {
+            "vse": {
+                "banks": banks_data,
+                "cryptocurrencies": cryptocurrencies_data
+            },
+            "banki": banks_data,
+            "kripta": cryptocurrencies_data
+        }
+        return Response(data)
