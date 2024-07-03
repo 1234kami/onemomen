@@ -6,6 +6,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.db import IntegrityError
 from rest_framework import generics, status
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
@@ -179,10 +180,14 @@ class UserLoginView(generics.CreateAPIView):
 class ChangePasswordView(generics.GenericAPIView):
     """Изменение пароля пользователя."""
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
     serializer_class = ChangePasswordSerializer
 
     def post(self, request):
         user = request.user
+        if not user.is_authenticated:
+            return Response({"response": False, "message": _("Пользователь не аутентифицирован")}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             password = serializer.data["password"]
