@@ -148,8 +148,12 @@ class ActivateAccountView(generics.GenericAPIView):
             user.activation_code = ''
             user.save()
 
+            # Generate a new authentication token for automatic login after account activation
+            token, created = Token.objects.get_or_create(user=user)
+
             return Response({
                 'response': True,
+                'token': token.key,  # Возвращаем токен
                 'message': _('Ваш аккаунт был успешно активирован.')
             }, status=status.HTTP_200_OK)
 
@@ -158,7 +162,6 @@ class ActivateAccountView(generics.GenericAPIView):
                 'response': False,
                 'message': _('Неверный код активации или email.')
             }, status=status.HTTP_400_BAD_REQUEST)
-
 class UserLoginView(generics.CreateAPIView):
     """Аутентификация пользователя."""
     serializer_class = UserLoginSerializer
