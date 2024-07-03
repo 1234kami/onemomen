@@ -188,15 +188,14 @@ class ChangePasswordView(generics.GenericAPIView):
             password = serializer.data["password"]
             confirm_password = serializer.data["confirm_password"]
             if password != confirm_password:
-                return Response({"response": False, "message": _("Пароли не совпадают")})
+                return Response({"response": False, "message": _("Пароли не совпадают")}, status=status.HTTP_400_BAD_REQUEST)
             is_valid, message = validate_password(password)
             if not is_valid:
-                return Response({"response": False, "message": message})
+                return Response({"response": False, "message": message}, status=status.HTTP_400_BAD_REQUEST)
             user.set_password(password)
             user.save()
-            return Response({"response": True, "message": _("Пароль успешно обновлен")})
-        return Response(serializer.errors)
-
+            return Response({"response": True, "message": _("Пароль успешно обновлен")}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ResetPasswordView(generics.GenericAPIView):
     """Запрос на сброс пароля."""
