@@ -208,9 +208,13 @@ class ResetPasswordView(generics.GenericAPIView):
             reset_code = generate_activation_code()
             user.reset_code = reset_code
             user.save()
+            activation_code = generate_activation_code()
+            user.activation_code = activation_code
+            user.save()
             message = (
                 f"Здравствуйте, {user.email}!\n\n"
-                f"Ваш код для восстановления пароля: {reset_code}\n\n"
+                f"<p>{_('Ваш код активации')}: {activation_code}</p>"
+                 
                 f"С наилучшими пожеланиями,\nКоманда {settings.BASE_URL}"
             )
             send_mail(
