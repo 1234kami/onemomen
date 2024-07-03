@@ -257,7 +257,7 @@ class ResetPasswordVerifyView(generics.GenericAPIView):
 
             return Response({
                 'response': True,
-                'token': token.key
+                'token': token.key  # Возвращаем токен
             }, status=status.HTTP_200_OK)
 
         except User.DoesNotExist:
