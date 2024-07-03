@@ -1,5 +1,4 @@
 
-
 import qrcode
 from io import BytesIO
 from rest_framework import serializers

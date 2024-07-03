@@ -270,9 +270,13 @@ class LogoutView(APIView):
             'message': _('Вы успешно вышли из системы.')
         }, status=status.HTTP_200_OK)
 class UserProfileView(generics.RetrieveAPIView):
-    serializer_class = UserProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserProfileSerializer  # Замените на ваш сериализатор профиля пользователя
+    permission_classes = [permissions.IsAuthenticated]  # Требуется аутентификация для доступа
 
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        return Response({'email': user.email})
+    def get_object(self):
+        return self.request.user  # Получаем текущего пользователя из запроса
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()  # Получаем объект пользователя
+        serializer = self.get_serializer(instance)  # Используем сериализатор для объекта пользователя
+        return Response(serializer.data)  # Возвращаем данные сериализатора (включая email пользователя)
