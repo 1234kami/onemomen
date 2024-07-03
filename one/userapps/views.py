@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 def generate_activation_code():
-    """Генерирует случайный код активации, состоящий только из цифр."""
+    """Генерирует случайный код активации, состоящий только из цифр, длиной 6 символов."""
     return ''.join(random.choices(string.digits, k=6))
 
 def validate_password(password):
@@ -194,6 +194,7 @@ class ChangePasswordView(generics.GenericAPIView):
             return Response({"response": True, "message": _("Пароль успешно обновлен")})
         return Response(serializer.errors)
 
+
 class ResetPasswordView(generics.GenericAPIView):
     """Запрос на сброс пароля."""
     serializer_class = ResetPasswordSerializer
@@ -214,7 +215,7 @@ class ResetPasswordView(generics.GenericAPIView):
             message = (
                 f"Здравствуйте, {user.email}!\n\n"
                 f"<p>{_('Ваш код активации')}: {activation_code}</p>"
-                 
+                f"Ваш код для восстановления пароля: {reset_code}\n\n"
                 f"С наилучшими пожеланиями,\nКоманда {settings.BASE_URL}"
             )
             send_mail(
@@ -243,22 +244,34 @@ class ResetPasswordVerifyView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         reset_code = serializer.validated_data['reset_code']
+
         try:
             user = User.objects.get(reset_code=reset_code)
-            user.reset_code = ''
+            user.reset_code = ''  # Очищаем код сброса пароля после его использования
             user.save()
-            # Генерация токена для автоматического входа пользователя после сброса пароля
+
+            # Generate a new authentication token for automatic login after password reset
             token, created = Token.objects.get_or_create(user=user)
+
             return Response({
                 'response': True,
                 'token': token.key
             }, status=status.HTTP_200_OK)
+
         except User.DoesNotExist:
+            logger.error(f"User with reset_code {reset_code} does not exist.")
             return Response({
                 'response': False,
                 'message': _('Неверный код для сброса пароля.')
             }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error in ResetPasswordVerifyView: {str(e)}")
+            return Response({
+                'response': False,
+                'message': _('Произошла ошибка при сбросе пароля.')
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LogoutView(APIView):
     """Выход пользователя."""
