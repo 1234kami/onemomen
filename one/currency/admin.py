@@ -4,7 +4,7 @@ from .models import FiatCurrency, Coin, Network
 # Регистрация модели FiatCurrency
 @admin.register(FiatCurrency)
 class FiatCurrencyAdmin(admin.ModelAdmin):
-    list_display = ('assetCode', 'assetName', 'assetLogo', 'size', 'fiatMinLimit', 'fiatMaxLimit', 'cryptoMinLimit', 'cryptoMaxLimit', 'quotation')
+    list_display = ('code', 'name', 'assetLogo', 'size', 'fiatMinLimit', 'fiatMaxLimit', 'cryptoMinLimit', 'cryptoMaxLimit', 'quotation')
     search_fields = ('assetCode', 'assetName')
     list_filter = ('size', 'quotation')
     # Добавьте другие необходимые настройки административной панели
@@ -24,3 +24,9 @@ class NetworkAdmin(admin.ModelAdmin):
     search_fields = ('coin__name', 'name')
     list_filter = ('deposit', 'receive', 'is_default')
     # Добавьте другие необходимые настройки административной панели
+
+
+# @admin.register(Bank)
+# class BankAdmin(admin.ModelAdmin):
+#     # Define fields to display in the Bank admin panel
+#     list_display = ('name','logo')
