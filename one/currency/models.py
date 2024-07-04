@@ -1,6 +1,7 @@
 from django.db import models
 
 class FiatCurrency(models.Model):
+    name = models.CharField(max_length=100) 
     assetCode = models.CharField(max_length=10)  # Код валюты (например, USD)
     assetName = models.CharField(max_length=255)  # Название валюты
     assetLogo = models.URLField()  # URL-адрес логотипа валюты

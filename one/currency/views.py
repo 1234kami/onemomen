@@ -49,25 +49,60 @@ class FiatCurrencyListView(APIView):
 
 
 class All(APIView):
-    def get_all_data():
+    def get(self,request, *args, **kwargs):
         banks = FiatCurrency.objects.all()
-        cryptocurrencies = FiatCurrency.all()
+        cryptocurrencies = Coin.objects.all()
 
 
         banks_data = FiatCurrencySerializer(banks,many=True)
-        cryptocurrencies_data = CoinSerializer(cryptocurrencies,many=True).data
+        cryptocurrencies_data = CoinSerializer(cryptocurrencies,many=True)
 
 
-        return {
-        "vse": {
-            "banks": banks_data,
+        data =  {
+        "all": {
+            "banks": banks_data,    
             "cryptocurrencies": cryptocurrencies_data
         },
         "banki": banks_data,
         "kripta": cryptocurrencies_data
-    }
+        }
+        return Response(data)
+    
 
-   
 
+
+
+class AllCurrenciesView(APIView):
+    def get_queryset(self, model, name, code):
+        queryset = model.objects.all()
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        if code:
+            queryset = queryset.filter(code__icontains(code))
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        name = request.query_params.get('name', None)
+        code = request.query_params.get('code', None)
+
+        # Фильтрация фиатных валют
+        fiat_queryset = self.get_queryset(FiatCurrency, name, code)
+        fiat_serializer = FiatCurrencySerializer(fiat_queryset, many=True, context={'request': request})
+
+        # Фильтрация криптовалют
+        coin_queryset = self.get_queryset(Coin, name, code)
+        coin_serializer = CoinSerializer(coin_queryset, many=True, context={'request': request})
+
+        # Формирование ответа с объединёнными и отдельными данными
+        data = {
+            "all": {
+                "banks": fiat_serializer.data,
+                "cryptocurrencies": coin_serializer.data
+            },
+            "banki": fiat_serializer.data,
+            "kripta": coin_serializer.data
+        }
+
+        return Response(data)
 
 
