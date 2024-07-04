@@ -48,6 +48,57 @@ class FiatCurrencyListView(APIView):
 
 
 
+class All(APIView):
+    def get(self, request, *args, **kwargs):
+        banks = FiatCurrency.objects.all()
+        cryptocurrencies = Coin.objects.all()
+
+        banks_data = FiatCurrencySerializer(banks, many=True).data
+        cryptocurrencies_data = CoinSerializer(cryptocurrencies, many=True).data
+
+        data = {
+            "vse": {
+                "banks": banks_data,
+                "cryptocurrencies": cryptocurrencies_data
+            },
+            "banki": banks_data,
+            "kripta": cryptocurrencies_data
+        }
+        return Response(data)
 
 
 
+class Allvalut(APIView):
+    def get_queryset(self, model_class, name=None, code=None):
+        queryset = model_class.objects.all()
+
+        if name:
+            queryset = queryset.filter(name=name)
+        if code:
+            queryset = queryset.filter(code=code)
+        
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        name = request.query_params.get('name', None)
+        code = request.query_params.get('code', None)
+
+        # Фильтрация фиатных валют
+        fiat_queryset = self.get_queryset(FiatCurrency, name, code)
+        fiat_serializer = FiatCurrencySerializer(fiat_queryset, many=True, context={'request': request})
+
+        # Фильтрация криптовалют
+        coin_queryset = self.get_queryset(Coin, name, code)
+        coin_serializer = CoinSerializer(coin_queryset, many=True, context={'request': request})
+
+        # Формирование ответа с объединёнными и отдельными данными
+        data = {
+            "all": {
+                "banks": fiat_serializer.data,
+                "cryptocurrencies": coin_serializer.data
+            },
+            "banks": fiat_serializer.data,
+            "cryptocurrencies": coin_serializer.data
+        }
+
+        return Response(data)
