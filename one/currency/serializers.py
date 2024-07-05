@@ -56,3 +56,10 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = '__all__'
+
+
+# class BankSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Bank
+#         fields = '__all__'
+        
