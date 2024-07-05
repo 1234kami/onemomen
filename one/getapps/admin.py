@@ -21,8 +21,8 @@ class CurrencyNewsAdmin(admin.ModelAdmin):
     search_fields = ('language', 'title', 'content')
 @admin.register(OneMoment)
 class OneMomentAdmin(admin.ModelAdmin):
-    list_display = ('language', 'name', 'text')
-    search_fields = ('language', 'name', 'text')
+    list_display = ('language', 'name', 'text','image')
+    search_fields = ('language', 'name', 'text','image')
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
     list_display = ('email', 'sender', 'timestamp')

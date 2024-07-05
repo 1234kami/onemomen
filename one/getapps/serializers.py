@@ -27,14 +27,10 @@ class CurrencyNewsSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyNews
         fields = '__all__'
-
-
 class OneMomentSerializer(serializers.ModelSerializer):
     class Meta:
         model = OneMoment
         fields = '__all__'
-
-
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact

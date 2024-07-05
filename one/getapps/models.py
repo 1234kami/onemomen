@@ -90,7 +90,7 @@ class OneMoment(models.Model):
     language = models.CharField('Язык', choices=LANG_CHOICES, default='en', max_length=255, null=True, blank=True)
     name = models.CharField(max_length=100, verbose_name="имя")
     text = models.CharField(max_length=100, verbose_name="Текст")
-
+    image = models.ImageField(_('Image'), upload_to='onemoment_images/', null=True, blank=True)  # Image field
     class Meta:
         verbose_name = "Один момент"
         verbose_name_plural = "Одни моменты"
