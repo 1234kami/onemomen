@@ -1,8 +1,9 @@
 from django.urls import path
-from .views import CreatePaymentView, ExecutePaymentView, CancelPaymentView
+from .views import PaymentCreateView, PayPalExecuteView, PayPalCancelView, PaymentHistoryView
 
 urlpatterns = [
-    path('create-payment/', CreatePaymentView.as_view(), name='create-payment'),
-    path('execute-payment/', ExecutePaymentView.as_view(), name='execute-payment'),
-    path('cancel-payment/', CancelPaymentView.as_view(), name='cancel-payment'),
+    path('create-payment/', PaymentCreateView.as_view(), name='create-payment'),
+    path('execute/', PayPalExecuteView.as_view(), name='paypal-execute'),
+    path('cancel/', PayPalCancelView.as_view(), name='paypal-cancel'),
+    path('history/', PaymentHistoryView.as_view(), name='payment-history'),
 ]

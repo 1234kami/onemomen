@@ -68,6 +68,21 @@ class All(APIView):
 
 
 
+# class Banks(APIView):
+#     def get(self, request, *args, **kwargs):
+#         banki = Bank.objects.all()
+
+#         banki_data = BankSerializer(banki,many=True).data
+
+
+#         data = {
+#             "banki" : banki_data,
+
+#         }
+#         return Response(data)
+
+
+
 class Allvalut(APIView):
     def get_queryset(self, model_class, name=None, code=None):
         queryset = model_class.objects.all()
@@ -84,11 +99,11 @@ class Allvalut(APIView):
         code = request.query_params.get('code', None)
 
         # Фильтрация фиатных валют
-        fiat_queryset = self.get_queryset(FiatCurrency, name, code)
+        fiat_queryset = self.get_queryset(FiatCurrency, name=name)
         fiat_serializer = FiatCurrencySerializer(fiat_queryset, many=True, context={'request': request})
 
         # Фильтрация криптовалют
-        coin_queryset = self.get_queryset(Coin, name, code)
+        coin_queryset = self.get_queryset(Coin, name=name, code=code)
         coin_serializer = CoinSerializer(coin_queryset, many=True, context={'request': request})
 
         # Формирование ответа с объединёнными и отдельными данными

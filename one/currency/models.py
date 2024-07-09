@@ -1,10 +1,10 @@
 from django.db import models
 
 class FiatCurrency(models.Model):
-    assetCode = models.CharField(max_length=10)  # Код валюты (например, USD)
-    assetName = models.CharField(max_length=255)  # Название валюты
-    assetLogo = models.URLField()  # URL-адрес логотипа валюты
-    size = models.IntegerField()  # Размер валюты (например, 2 для копеек, 100 для центов)
+    name = models.CharField(max_length=100) 
+    code = models.CharField(max_length=10)  # Код валюты (например, USD)
+    assetLogo = models.URLField(null=True,blank=True)  # URL-адрес логотипа валюты
+    size = models.IntegerField(null=True,blank=True)  # Размер валюты (например, 2 для копеек, 100 для центов)
     fiatMinLimit = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)  # Минимальный лимит для фиатных операций
     fiatMaxLimit = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
  # Максимальный лимит для фиатных операций
@@ -14,11 +14,27 @@ class FiatCurrency(models.Model):
     suggestAmounts = models.JSONField(null=True, blank=True)  # Рекомендованные суммы для операций
 
     def __str__(self):
-        return f"{self.assetName} ({self.assetCode})"  # Возвращает строковое представление объекта
+        return f"{self.name} ({self.code})"  # Возвращает строковое представление объекта
 
     class Meta:
         verbose_name = "Фиатная валюта"  # Название модели в единственном числе
         verbose_name_plural = "Фиатные валюты"  # Название модели во множественном числе
+
+
+
+# class Bank(models.Model):
+#     name = models.CharField(max_length=100, verbose_name="Название банка")
+#     # currency = models.ForeignKey(FiatCurrency, on_delete=models.CASCADE, related_name="banks")
+#     logo = models.URLField()
+
+#     def __str__(self):
+#         return self.name
+
+#     class Meta:
+#         verbose_name = "Банк"
+#         verbose_name_plural = "Банки"
+
+
 
 
 class Coin(models.Model):
