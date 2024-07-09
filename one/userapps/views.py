@@ -171,6 +171,13 @@ class UserLoginView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
+
+        if not user.is_active:
+            return Response({
+                'response': False,
+                'message': _('Ваш аккаунт не активирован. Проверьте вашу электронную почту для получения кода активации.')
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         token, created = Token.objects.get_or_create(user=user)
         return Response({
             'response': True,
